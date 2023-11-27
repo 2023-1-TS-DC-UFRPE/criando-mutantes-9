@@ -23,7 +23,7 @@ public class ContaImposto extends ContaAbstrata {
 
 	@Override
 	public void debitar(double valor) throws SaldoInsuficienteException {
-		if (this.getSaldo() < valor)
+		if (this.getSaldo() > valor)
 			throw new SaldoInsuficienteException(this.getNumero(),
 					this.getSaldo());
 		double imposto = valor * CPMF;
