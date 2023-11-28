@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="banco-exemplo-interface-gerencia:jar">
+    <output-path>$PROJECT_DIR$/classes/artifacts/banco_exemplo_interface_gerencia_jar</output-path>
+    <root id="archive" name="banco-exemplo-interface-gerencia.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="banco-exemplo-interface-gerencia" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.7.0/mockito-core-5.7.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.9/byte-buddy-1.14.9.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.9/byte-buddy-agent-1.14.9.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
