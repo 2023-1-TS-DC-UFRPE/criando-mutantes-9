@@ -12,6 +12,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import br.ufrpe.poo.banco.dados.RepositorioContasArquivoBin;
+import br.ufrpe.poo.banco.exceptions.ClienteJaCadastradoException;
 import br.ufrpe.poo.banco.exceptions.ContaJaCadastradaException;
 import br.ufrpe.poo.banco.exceptions.ContaNaoEncontradaException;
 import br.ufrpe.poo.banco.exceptions.InicializacaoSistemaException;
@@ -38,6 +39,16 @@ public class TesteBanco {
 		TesteBanco.banco = Banco.getInstance();
 	}
 
+	@Test
+	public void testeCadastrarCliente() throws RepositorioException, ClienteJaCadastradoException{
+		Cliente cliente1 = new Cliente("Carlos", "12345678901");
+		Cliente cliente2 = new Cliente("Ana", "10987654321");
+		banco.cadastrarCliente(cliente1);
+		banco.cadastrarCliente(cliente2);
+
+		banco.procurarCliente("12345678901");
+		assertEquals(Integer.parseInt(cliente1.getCpf()), Integer.parseInt(cliente2.getCpf()));
+	}
 	/**
 	 * Verifica o cadastramento de uma nova conta.
 	 * 
@@ -103,6 +114,16 @@ public class TesteBanco {
 		fail("Excecao ContaNaoEncontradaException nao levantada");
 	}
 
+	@Test(expected = ValorInvalidoException.class)
+	public void testeCreditarContaInexistente2() throws RepositorioException,
+			ContaNaoEncontradaException, InicializacaoSistemaException,
+			ValorInvalidoException {
+
+		banco.creditar(new Conta("", 0), -1);
+
+		fail("Excecao ContaNaoEncontradaException nao levantada");
+	}
+
 	/**
 	 * Verifica que a operacao de debito em conta corrente esta acontecendo
 	 * corretamente.
@@ -110,6 +131,19 @@ public class TesteBanco {
 	 */
 	@Test
 	public void testeDebitarContaExistente() throws RepositorioException,
+			ContaNaoEncontradaException, SaldoInsuficienteException,
+			InicializacaoSistemaException, ContaJaCadastradaException,
+			ValorInvalidoException {
+
+		ContaAbstrata conta = new Conta("1", 50);
+		banco.cadastrar(conta);
+		banco.debitar(conta, -1);
+		conta = banco.procurarConta("1");
+		assertEquals(0, conta.getSaldo(), 0);
+	}
+
+	@Test(expected = ValorInvalidoException.class)
+	public void testeDebitarContaExistente2() throws RepositorioException,
 			ContaNaoEncontradaException, SaldoInsuficienteException,
 			InicializacaoSistemaException, ContaJaCadastradaException,
 			ValorInvalidoException {
@@ -166,7 +200,7 @@ public class TesteBanco {
 	public void testeTransferirContaInexistente() throws RepositorioException,
 			ContaNaoEncontradaException, SaldoInsuficienteException,
 			InicializacaoSistemaException, ValorInvalidoException {
-
+			// TODO: Possiblitar a passagem do teste pelas duas decisões da branch
 		banco.transferir(new Conta("", 0), new Conta("", 0), 50);
 		fail("Excecao ContaNaoEncontradaException nao levantada)");
 	}
