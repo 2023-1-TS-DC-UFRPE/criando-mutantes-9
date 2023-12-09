@@ -28,6 +28,7 @@ import br.ufrpe.poo.banco.exceptions.RenderJurosPoupancaException;
 import br.ufrpe.poo.banco.exceptions.RepositorioException;
 import br.ufrpe.poo.banco.exceptions.SaldoInsuficienteException;
 import br.ufrpe.poo.banco.exceptions.ValorInvalidoException;
+import org.mockito.Mockito;
 
 public class TesteBanco {
 
@@ -50,6 +51,22 @@ public class TesteBanco {
 		Banco.instance = null;
 		TesteBanco.banco = Banco.getInstance();
 	}
+
+	@Test(expected = InicializacaoSistemaException.class)
+	public void testeGetInstance() throws IOException, RepositorioException,
+			InicializacaoSistemaException {
+
+		RepositorioClientesArquivoBin mockClientesRepo = Mockito.mock(RepositorioClientesArquivoBin.class);
+		RepositorioContasArquivoBin mockContasRepo = Mockito.mock(RepositorioContasArquivoBin.class);
+
+		// Mock de comportamento para lançar RepositorioException ao criar uma nova instância do Banco
+		Mockito.when(new Banco(mockClientesRepo, mockContasRepo)).thenThrow(new RepositorioException(new Exception()));
+
+		// Teste quando uma RepositorioException é lançada
+		Banco.instance = null;
+		Banco.getInstance();
+	}
+
 	/**
 	 * Verifica o cadastramento de um novo cliente.
 	 * 
@@ -383,6 +400,22 @@ public class TesteBanco {
 	 * Verifica que render bonus de uma conta especial funciona corretamente.
 	 * 
 	 */
+
+	@Test
+	public void testeRemoverCliente() throws ClienteJaCadastradoException, RepositorioException, ContaJaCadastradaException, ClienteJaPossuiContaException, ClienteNaoPossuiContaException, ContaNaoEncontradaException, ClienteNaoCadastradoException {
+		Cliente cliente = new Cliente("Joao", "11122233344");
+		Conta conta = new Conta("111", 100);
+		banco.cadastrar(conta);
+		banco.cadastrarCliente(cliente);
+		cliente.adicionarConta("111");
+		banco.removerCliente("11122233344");
+	}
+
+	@Test(expected = ClienteNaoCadastradoException.class)
+	public void testeRemoverClienteNaoCadastrado() throws ClienteNaoPossuiContaException, ContaNaoEncontradaException, ClienteNaoCadastradoException, RepositorioException {
+		banco.removerCliente("11122233344");
+	}
+
 
 
 }
