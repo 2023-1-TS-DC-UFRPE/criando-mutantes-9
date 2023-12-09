@@ -1,30 +1,25 @@
 package br.ufrpe.poo.banco.negocio;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import br.ufrpe.poo.banco.dados.*;
+import br.ufrpe.poo.banco.exceptions.*;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import br.ufrpe.poo.banco.dados.RepositorioContasArquivoBin;
-import br.ufrpe.poo.banco.exceptions.ClienteJaCadastradoException;
-import br.ufrpe.poo.banco.exceptions.ContaJaCadastradaException;
-import br.ufrpe.poo.banco.exceptions.ContaNaoEncontradaException;
-import br.ufrpe.poo.banco.exceptions.InicializacaoSistemaException;
-import br.ufrpe.poo.banco.exceptions.RenderBonusContaEspecialException;
-import br.ufrpe.poo.banco.exceptions.RenderJurosPoupancaException;
-import br.ufrpe.poo.banco.exceptions.RepositorioException;
-import br.ufrpe.poo.banco.exceptions.SaldoInsuficienteException;
-import br.ufrpe.poo.banco.exceptions.ValorInvalidoException;
+import static org.junit.Assert.*;
 
 public class TesteBanco {
 
 	private static Banco banco;
+	private final IRepositorioContas repositorioContas = new RepositorioContasArray();
+	private final IRepositorioClientes repositorioClientes = new RepositorioClientesArray();
+
+	public TesteBanco() throws RepositorioException {
+	}
 
 	@Before
 	public void apagarArquivos() throws IOException, RepositorioException,
@@ -205,21 +200,87 @@ public class TesteBanco {
 		fail("Excecao ContaNaoEncontradaException nao levantada)");
 	}
 
+
+	@Test(expected = ContaNaoEncontradaException.class)
+	public void testeRemoverContaInexistente() throws ContaNaoEncontradaException, RepositorioException, ClienteJaCadastradoException, ContaJaCadastradaException, ClienteJaPossuiContaException, ClienteNaoPossuiContaException {
+		Cliente cliente = new Cliente("Joao", "11122233344");
+		banco.cadastrarCliente(cliente);
+		cliente.adicionarConta("12321");
+		banco.removerConta(cliente, "12321");
+	}
+
+	@Test(expected = ClienteNaoPossuiContaException.class)
+	public void testeRemoverContaClienteNaoPossui() throws ClienteJaCadastradoException, RepositorioException, ContaJaCadastradaException, ClienteNaoPossuiContaException, ContaNaoEncontradaException {
+		Cliente cliente = new Cliente("Joao", "11122233344");
+		banco.cadastrarCliente(cliente);
+		Conta conta = new Conta("111", 100);
+		banco.cadastrar(conta);
+		banco.removerConta(cliente, "111");
+	}
+
+	@Test
+	public void testeRemoverConta() throws ClienteNaoPossuiContaException, ContaNaoEncontradaException, RepositorioException, ClienteJaPossuiContaException, ClienteJaCadastradoException, ContaJaCadastradaException {
+		Cliente cliente = new Cliente("Joao", "11122233344");
+		banco.cadastrarCliente(cliente);
+		Conta conta = new Conta("12321", 100);
+		banco.cadastrar(conta);
+		cliente.adicionarConta("12321");
+		banco.removerConta(cliente, "12321");
+		assertNull(banco.procurarConta("12321"));
+	}
+
+	@Test
+	public void testeAtualizarCliente() throws ClienteJaCadastradoException, RepositorioException, AtualizacaoNaoRealizadaException {
+		Cliente cliente = new Cliente("Joao", "11122233344");
+		banco.cadastrarCliente(cliente);
+		banco.atualizarCliente(cliente);
+	}
+
+	@Test(expected = AtualizacaoNaoRealizadaException.class)
+	public void testeAtualizarClienteInexistente() throws ClienteJaCadastradoException, RepositorioException, AtualizacaoNaoRealizadaException {
+		Cliente cliente = new Cliente("Joao", "11122233344");
+		banco.atualizarCliente(cliente);
+	}
+
+	@Test
+	public void testeRenderBonus() throws RepositorioException, ContaJaCadastradaException, ContaNaoEncontradaException, RenderBonusContaEspecialException {
+		ContaAbstrata contaEspecial = new ContaEspecial("111", 100);
+		banco.cadastrar(contaEspecial);
+		double bonus = ((ContaEspecial) contaEspecial).getBonus();
+		double saldoComBonus = bonus + (bonus * 0.01);
+		banco.renderBonus(contaEspecial);
+		double saldoRendimento = ((ContaEspecial) contaEspecial).getBonus();
+		assertEquals(bonus, saldoRendimento, 0);
+	}
+
+	@Test(expected = ContaNaoEncontradaException.class)
+	public void testeRenderBonusContaInexistente() throws ContaNaoEncontradaException, RepositorioException, RenderBonusContaEspecialException {
+		ContaAbstrata contaEspecial  = new ContaEspecial("111", 100);
+		banco.renderBonus(contaEspecial);
+	}
+	@Test(expected = RenderBonusContaEspecialException.class)
+	public void testeRenderBonusContaNaoEspecial() throws ContaNaoEncontradaException, RepositorioException, RenderBonusContaEspecialException {
+		ContaAbstrata contaEspecial  = new Poupanca("111", 100);
+		banco.renderBonus(contaEspecial);
+	}
+
+
+
 	/**
 	 * Verifica que render juros de uma conta poupanca funciona corretamente
 	 * 
 	 */
-	@Ignore
+
 	@Test
 	public void testeRenderJurosContaExistente() throws RepositorioException,
 			ContaNaoEncontradaException, RenderJurosPoupancaException,
 			InicializacaoSistemaException, ContaJaCadastradaException {
 
-		Poupanca poupanca = new Poupanca("20", 100);
+		ContaAbstrata poupanca = new Poupanca("20", 100);
 		banco.cadastrar(poupanca);
 		double saldoSemJuros = poupanca.getSaldo();
-		double saldoComJuros = saldoSemJuros + (saldoSemJuros * 0.008);
-		poupanca.renderJuros(0.008);
+		double saldoComJuros = saldoSemJuros + (saldoSemJuros * 0.5);
+		banco.renderJuros(poupanca);
 		assertEquals(saldoComJuros, poupanca.getSaldo(), 0);
 	}
 
@@ -228,13 +289,14 @@ public class TesteBanco {
 	 * excecao.
 	 * 
 	 */
-	@Ignore
+
 	@Test(expected = ContaNaoEncontradaException.class)
 	public void testeRenderJurosContaInexistente() throws RepositorioException,
 			ContaNaoEncontradaException, RenderJurosPoupancaException,
 			InicializacaoSistemaException {
 
-		fail("Nao implementado");
+		ContaAbstrata poupanca = new Poupanca("111", 100);
+		banco.renderJuros(poupanca);
 	}
 
 	/**
@@ -242,56 +304,22 @@ public class TesteBanco {
 	 * levanta excecao.
 	 * 
 	 */
-	@Ignore
+
 	@Test(expected = RenderJurosPoupancaException.class)
 	public void testeRenderJurosContaNaoEhPoupanca()
 			throws RepositorioException, ContaNaoEncontradaException,
 			RenderJurosPoupancaException, InicializacaoSistemaException,
 			ContaJaCadastradaException {
 
-		fail("Nao implementado");
+		ContaAbstrata contaEspecial = new ContaEspecial("111", 100);
+		banco.cadastrar(contaEspecial);
+		banco.renderJuros(contaEspecial);
 	}
 
 	/**
 	 * Verifica que render bonus de uma conta especial funciona corretamente.
 	 * 
 	 */
-	@Ignore
-	@Test
-	public void testeRenderBonusContaEspecialExistente()
-			throws RepositorioException, ContaNaoEncontradaException,
-			RenderBonusContaEspecialException, InicializacaoSistemaException,
-			RenderJurosPoupancaException, ContaJaCadastradaException {
 
-		fail("Nao implementado");
-	}
-
-	/**
-	 * Verifica que a tentativa de render bonus em inexistente levanta excecao.
-	 * 
-	 */
-	@Ignore
-	@Test(expected = ContaNaoEncontradaException.class)
-	public void testeRenderBonusContaEspecialNaoInexistente()
-			throws RepositorioException, ContaNaoEncontradaException,
-			RenderBonusContaEspecialException, InicializacaoSistemaException,
-			RenderJurosPoupancaException {
-
-		fail("Nao implementado");
-	}
-
-	/**
-	 * Verifica que tentativa de render bonus em conta que nao e especial
-	 * levante excecao.
-	 */
-	@Ignore
-	@Test(expected = RenderBonusContaEspecialException.class)
-	public void testeRenderBonusContaNaoEspecial() throws RepositorioException,
-			ContaNaoEncontradaException, RenderBonusContaEspecialException,
-			InicializacaoSistemaException, RenderJurosPoupancaException,
-			ContaJaCadastradaException {
-
-		fail("Nao implementado");
-	}
 
 }
