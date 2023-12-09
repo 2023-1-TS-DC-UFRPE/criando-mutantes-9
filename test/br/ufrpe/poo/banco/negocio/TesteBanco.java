@@ -1,5 +1,9 @@
 package br.ufrpe.poo.banco.negocio;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.beans.Transient;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,6 +15,19 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import br.ufrpe.poo.banco.dados.RepositorioContasArquivoBin;
+import br.ufrpe.poo.banco.exceptions.ClienteJaCadastradoException;
+import br.ufrpe.poo.banco.exceptions.ClienteJaPossuiContaException;
+import br.ufrpe.poo.banco.exceptions.ClienteNaoCadastradoException;
+import br.ufrpe.poo.banco.exceptions.ContaJaAssociadaException;
+import br.ufrpe.poo.banco.exceptions.ContaJaCadastradaException;
+import br.ufrpe.poo.banco.exceptions.ContaNaoEncontradaException;
+import br.ufrpe.poo.banco.exceptions.InicializacaoSistemaException;
+import br.ufrpe.poo.banco.exceptions.RenderBonusContaEspecialException;
+import br.ufrpe.poo.banco.exceptions.RenderJurosPoupancaException;
+import br.ufrpe.poo.banco.exceptions.RepositorioException;
+import br.ufrpe.poo.banco.exceptions.SaldoInsuficienteException;
+import br.ufrpe.poo.banco.exceptions.ValorInvalidoException;
 
 public class TesteBanco {
 
@@ -33,16 +50,31 @@ public class TesteBanco {
 		Banco.instance = null;
 		TesteBanco.banco = Banco.getInstance();
 	}
-
+	/**
+	 * Verifica o cadastramento de um novo cliente.
+	 * 
+	 */
 	@Test
 	public void testeCadastrarCliente() throws RepositorioException, ClienteJaCadastradoException{
 		Cliente cliente1 = new Cliente("Carlos", "12345678901");
+		banco.cadastrarCliente(cliente1);
+		//banco.cadastrarCliente(cliente2);
+		
+		banco.procurarCliente("12345678901");
 		Cliente cliente2 = new Cliente("Ana", "10987654321");
+		assertEquals("Cliente encontrado", Integer.parseInt(cliente1.getCpf()), Integer.parseInt(cliente2.getCpf()));
+	}
+	/**
+	 * Verifica o cadastramento de um cliente já existente.
+	 * 
+	 */
+	@Test(expected = ClienteJaCadastradoException.class)
+	public void testeCadastrarClienteExistente() throws RepositorioException, ClienteJaCadastradoException{
+		Cliente cliente1 = new Cliente("Carlos", "12345678901");
+		Cliente cliente2 = new Cliente("Carlos", "12345678901");
 		banco.cadastrarCliente(cliente1);
 		banco.cadastrarCliente(cliente2);
-
-		banco.procurarCliente("12345678901");
-		assertEquals(Integer.parseInt(cliente1.getCpf()), Integer.parseInt(cliente2.getCpf()));
+		fail("Excecao ClienteJaCadastradoException nao levantada");
 	}
 	/**
 	 * Verifica o cadastramento de uma nova conta.
@@ -75,6 +107,37 @@ public class TesteBanco {
 		banco.cadastrar(c1);
 		banco.cadastrar(c2);
 		fail("Excecao ContaJaCadastradaException nao levantada");
+	}
+	/**
+	 * Verifica se é possível associar a conta.
+	 * 
+	 */
+	@Test
+	public void testeAssociarConta() throws RepositorioException, ClienteJaPossuiContaException,
+			ContaJaAssociadaException, ClienteNaoCadastradoException, ClienteJaCadastradoException, ContaJaCadastradaException{
+		Cliente cl1 = new Cliente("Joyce", "45678903213");
+		banco.cadastrarCliente(cl1);
+
+		Conta c1 = new Conta("123", 1000);
+		banco.cadastrar(c1);
+		banco.associarConta("45678903213", "123");
+	}
+
+	@Test
+	public void testeAssociarContaContaInexistente() throws RepositorioException, ClienteJaPossuiContaException,
+			ContaJaAssociadaException, ClienteNaoCadastradoException, ClienteJaCadastradoException, ContaJaCadastradaException{
+		Cliente cl1 = new Cliente("Joyce", "45678909213");
+		banco.cadastrarCliente(cl1);
+
+		ContaAbstrata c2 = new Conta("", 10);
+		banco.associarConta("45678909213", "");
+	}
+
+	@Test(expected = ClienteNaoCadastradoException.class)
+	public void testeAssociarContaClienteInexistente() throws RepositorioException, ClienteJaPossuiContaException,
+			ContaJaAssociadaException, ClienteNaoCadastradoException, ClienteJaCadastradoException, ContaJaCadastradaException{
+		Cliente cl1 = new Cliente("Ronaldo", "67543213456");
+		banco.associarConta("67543213456", "123");
 	}
 
 	/**
