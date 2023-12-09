@@ -1,8 +1,5 @@
 package br.ufrpe.poo.banco.negocio;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.beans.Transient;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -15,19 +12,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import br.ufrpe.poo.banco.dados.RepositorioContasArquivoBin;
-import br.ufrpe.poo.banco.exceptions.ClienteJaCadastradoException;
-import br.ufrpe.poo.banco.exceptions.ClienteJaPossuiContaException;
-import br.ufrpe.poo.banco.exceptions.ClienteNaoCadastradoException;
-import br.ufrpe.poo.banco.exceptions.ContaJaAssociadaException;
-import br.ufrpe.poo.banco.exceptions.ContaJaCadastradaException;
-import br.ufrpe.poo.banco.exceptions.ContaNaoEncontradaException;
-import br.ufrpe.poo.banco.exceptions.InicializacaoSistemaException;
-import br.ufrpe.poo.banco.exceptions.RenderBonusContaEspecialException;
-import br.ufrpe.poo.banco.exceptions.RenderJurosPoupancaException;
-import br.ufrpe.poo.banco.exceptions.RepositorioException;
-import br.ufrpe.poo.banco.exceptions.SaldoInsuficienteException;
-import br.ufrpe.poo.banco.exceptions.ValorInvalidoException;
 
 public class TesteBanco {
 
@@ -86,11 +70,15 @@ public class TesteBanco {
 			InicializacaoSistemaException {
 
 		Banco banco = new Banco(null, new RepositorioContasArquivoBin());
-		ContaAbstrata conta1 = new Conta("1", 100);
+		String contaNumero = "1";
+		ContaAbstrata conta1 = new Conta(null, 100);
+		conta1.setNumero(contaNumero);
 		banco.cadastrar(conta1);
+		
 		ContaAbstrata conta2 = banco.procurarConta("1");
 		assertEquals(conta1.getNumero(), conta2.getNumero());
 		assertEquals(conta1.getSaldo(), conta2.getSaldo(), 0);
+		assertEquals(contaNumero,conta1.getNumero());
 	}
 
 	/**
@@ -254,15 +242,36 @@ public class TesteBanco {
 	 * existe levanta excecao.
 	 * 
 	 */
-	@Test(expected = ContaNaoEncontradaException.class)
-	public void testeTransferirContaInexistente() throws RepositorioException,
-			ContaNaoEncontradaException, SaldoInsuficienteException,
+	@Test(expected = ClienteNaoPossuiContaException.class)
+	public void testeTransferirContaOrigemInexistente() throws RepositorioException,
+			ContaNaoEncontradaException, SaldoInsuficienteException, ClienteJaCadastradoException,
 			InicializacaoSistemaException, ValorInvalidoException {
-			// TODO: Possiblitar a passagem do teste pelas duas decisões da branch
-		banco.transferir(new Conta("", 0), new Conta("", 0), 50);
-		fail("Excecao ContaNaoEncontradaException nao levantada)");
+			//depois criar um teste no qual o cliente já possua uma conta e o destino não possua
+			Cliente c1 = new Cliente("Ana", "12345678905");
+			banco.cadastrarCliente(c1);
+
+			ContaAbstrata ca1 = new Conta("6", 50);
+			ContaAbstrata ca2 = new Conta("9", 10);
+
+			banco.transferir(ca1, ca2, 50);
+		//fail("Excecao ContaNaoEncontradaException nao levantada)");
 	}
 
+	@Test(expected = ContaNaoEncontradaException.class)
+	public void testeTransferirContaDestinoInexistente() throws RepositorioException, ContaJaCadastradaException,
+			ContaNaoEncontradaException, SaldoInsuficienteException, ClienteJaCadastradoException,
+			InicializacaoSistemaException, ValorInvalidoException {
+			//depois criar um teste no qual o cliente já possua uma conta e o destino não possua
+			Cliente c1 = new Cliente("Flavio", "15345678905");
+			banco.cadastrarCliente(c1);
+
+			ContaAbstrata ca1 = new Conta("8", 50);
+			banco.cadastrar(ca1);
+			ContaAbstrata ca2 = new Conta("5", 10);
+
+			banco.transferir(ca1, ca2, 50);
+		//fail("Excecao ContaNaoEncontradaException nao levantada)");
+	}
 
 	@Test(expected = ContaNaoEncontradaException.class)
 	public void testeRemoverContaInexistente() throws ContaNaoEncontradaException, RepositorioException, ClienteJaCadastradoException, ContaJaCadastradaException, ClienteJaPossuiContaException, ClienteNaoPossuiContaException {
