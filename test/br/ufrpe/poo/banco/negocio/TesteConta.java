@@ -75,4 +75,11 @@ public class TesteConta {
 		Conta c1 = new Conta("1", saldoInicial);
 		c1.debitar(debito);
 	}
+
+	@Test
+	public void equalsContaIsNotContaTest() {
+		Conta c1 = new Conta("1", 0);
+		Conta c2 = null;
+		assertFalse(c1.equals(c2));
+	}
 }

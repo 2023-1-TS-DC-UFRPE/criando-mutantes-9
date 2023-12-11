@@ -205,6 +205,16 @@ public class TesteCliente {
 		assertTrue(c1.equals(c2));
 	}
 
+	/*
+	 * Testa método Equals para quando não há instância de cliente
+	 */
+	@Test
+	public void equalsClienteIsNotClienteTest() {
+		Cliente c1 = new Cliente("nome", "123");
+		Cliente c2 = null;
+		assertFalse(c1.equals(c2));
+	}
+
 	/**
 	 * Testa a remoção de uma determinada conta que não está vinculada ao
 	 * cliente
